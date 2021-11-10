@@ -3,28 +3,25 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 internal class MaitreDTest {
+    val table = Table(4)
     @Test
     fun noExistingReservation() {
-        val tableSize = 4
-        val maitreD = MaitreD(tableSize)
+        val maitreD = MaitreD(table)
 
         assertEquals(ACCEPTED, maitreD.reserve(CanditateReservation(4)))
     }
 
     @Test
     fun noExistingReservationAndTableSizeExceed() {
-        val tableSize = 4
-        val maitreD = MaitreD(tableSize)
+        val maitreD = MaitreD(table)
 
         assertEquals(REJECTED, maitreD.reserve(CanditateReservation(5)))
     }
 
     @Test
     fun existingReservationAtTheCandidateReservationDateCausesAnExceedOfTableSize() {
-        val tableSize = 4
-        val maitreD = MaitreD(tableSize)
-        val reservations = listOf(Reservation(3))
-        maitreD.with(reservations)
+        val maitreD = MaitreD(table)
+        maitreD.with(listOf(Reservation(3)))
 
         assertEquals(REJECTED, maitreD.reserve(CanditateReservation(2)))
     }
