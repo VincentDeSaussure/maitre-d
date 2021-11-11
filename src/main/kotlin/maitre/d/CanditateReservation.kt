@@ -1,3 +1,5 @@
 package maitre.d
 
-class CanditateReservation(val seats: Int, val date: String)
+import java.time.LocalDateTime
+
+class CanditateReservation(val seats: Int, val date: LocalDateTime)
