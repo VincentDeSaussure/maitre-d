@@ -2,36 +2,45 @@ package maitre.d
 
 import java.time.LocalDateTime
 
-class Restaurant(private var tables: List<Table>, seatingDuration: Int = 2) {
-    fun from(reservations: List<Reservation>) {
-        for (reservation in reservations) {
-            val availableTable = this.tables.filter { table -> table.seats > 0 }
-            val table = availableTable.filter { it.seats >= reservation.seats }.minByOrNull { it.seats  }
-            table?.assign(reservation.seats)
+class Restaurant(private var tables: List<Table>, val seatingDuration: Long) {
+    private lateinit var reservations: List<Reservation>
+
+    private fun findSmallestTableFor(seats: Int) =
+        tables.filter { it.seats >= seats }.minByOrNull { it.seats }
+
+    fun with(reservations: List<Reservation>): Restaurant {
+        this.reservations = reservations
+        return this
+    }
+
+    fun at(atDate: LocalDateTime) {
+        for (reservation in reservationDuring(atDate)) {
+            findSmallestTableFor(reservation.seats)?.assign(reservation.seats)
         }
     }
 
-    private fun availableSeats(): Int {
-        return this.tables.fold(0) { a, b -> a + b.seats }
+    private fun reservationDuring(dateTime: LocalDateTime): List<Reservation> {
+        val aSeatingBefore = dateTime.minusHours(seatingDuration)
+        val aSeatingAfter = dateTime.plusHours(seatingDuration)
+        return reservations.filter { aSeatingBefore.isBefore(it.date) && it.date.isBefore(aSeatingAfter) }
     }
 
-    fun assign(candidateReservation: CanditateReservation): Boolean {
-        return this.tables.any { it.seats >= candidateReservation.seats }
-    }
-}
+    private fun haveAvailableTableFor(candidateReservation: Reservation) =
+        findSmallestTableFor(candidateReservation.seats) != null
 
-class MaitreD(private var restaurant: Restaurant, private val reservations: MutableList<Reservation>) {
-
-    fun reserves(candidateReservation: CanditateReservation): String {
-        restaurant.from(this.reservationsAt(candidateReservation.date))
-        return if (restaurant.assign(candidateReservation)) {
+    fun canAccept(candidate: Reservation): String {
+        return if (haveAvailableTableFor(candidate)) {
             ACCEPTED
         } else {
             REJECTED
         }
     }
+}
 
-    private fun reservationsAt(date: LocalDateTime): List<Reservation> {
-        return this.reservations.filter({ date.isEqual( it.date )})
+class MaitreD(private var restaurant: Restaurant, private val reservations: MutableList<Reservation>) {
+
+    fun reserves(candidate: Reservation): String {
+        restaurant.with(reservations).at(candidate.date)
+        return restaurant.canAccept(candidate)
     }
 }
