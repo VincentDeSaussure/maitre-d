@@ -6,7 +6,7 @@ class Restaurant(private var tables: List<Table>, val seatingDuration: Long) {
     private lateinit var reservations: List<Reservation>
 
     private fun findSmallestTableFor(seats: Int) =
-        tables.filter { it.seats >= seats }.minByOrNull { it.seats }
+        tables.filter { it.available(seats) }.minByOrNull { it.capacity() }
 
     fun with(reservations: List<Reservation>): Restaurant {
         this.reservations = reservations

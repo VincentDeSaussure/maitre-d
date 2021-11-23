@@ -1,23 +1,38 @@
 package maitre.d
 
-sealed class Table(var seats: Int) {
+interface Table {
+    fun capacity(): Int
+    fun assign(seats: Int)
+    fun available(seats: Int): Boolean
+}
+
+class ExclusiveTable(private val seats: Int): Table {
     init {
-        require(seats > 0, { "A Table should have a seat" })
+        require(seats > 0, { "A Table should have at least one seat" })
     }
 
-    open fun assign(seats: Int) {
-        throw IllegalArgumentException("A table should have a assign implementation")
+    private var isReserved: Boolean = false
+    override fun capacity(): Int = seats
+
+    override fun assign(seats: Int) {
+        if (available(seats)) this.isReserved = true
     }
+
+    override fun available(seats: Int): Boolean = !isReserved && this.affords(seats)
+
+    private fun affords(testSeats: Int): Boolean = seats >= testSeats
 }
 
-class ExclusiveTable(seats: Int): Table(seats) {
-    override fun assign(seats: Int) {
-        this.seats = 0
+class CommunalTable(private var seats: Int): Table {
+    init {
+        require(seats > 0, { "A Table should have at least one seat" })
     }
-}
 
-class CommunalTable(seats: Int): Table(seats) {
+    override fun capacity(): Int = seats
+
     override fun assign(seats: Int) {
-        this.seats -= seats
+        if (available(seats)) this.seats -= seats
     }
+
+    override fun available(testSeats: Int) = seats >= testSeats
 }
